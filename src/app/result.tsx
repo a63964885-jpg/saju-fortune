@@ -1,13 +1,16 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
 import { CategoryView } from '../components/CategoryView';
 import { ElementBar } from '../components/ElementBar';
 import { FortuneTabs } from '../components/FortuneTabs';
+import { GoldButton } from '../components/GoldButton';
 import { PillarTable } from '../components/PillarTable';
 import { SectionCard } from '../components/SectionCard';
-import { colors, spacing } from '../components/theme';
+import { Stars } from '../components/Stars';
+import { colors, fonts, gradients, radius, spacing } from '../components/theme';
 import { calculateSaju, HOUR_BRANCHES, interpret } from '../lib/saju';
 import type { BirthInput, FortuneCategory } from '../types/saju';
 
@@ -78,52 +81,89 @@ export default function Result() {
     });
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.name}>{input.name || '당신'}님의 평생사주</Text>
-        <Text style={styles.meta}>
-          {calendarText} {input.year}.{input.month}.{input.day} · {hourText} ·{' '}
-          {input.gender === 'male' ? '남' : '여'}
-          {input.calendar === 'lunar' ? ` (양력 ${saju.solarDate})` : ''}
-        </Text>
+    <ScrollView contentContainerStyle={styles.scroll}>
+      <LinearGradient colors={gradients.night} style={styles.hero}>
+        <Stars />
+        <Text style={styles.eyebrow}>{calendarText} {input.year}.{input.month}.{input.day} · {hourText} · {input.gender === 'male' ? '남' : '여'}</Text>
+        <Text style={styles.name}>{input.name || '당신'}님의 사주</Text>
+        <View style={styles.miniPillars}>
+          {saju.pillars.map((p) => (
+            <View key={p.label} style={[styles.miniPillar, p.label === '일주' && styles.miniPillarMe]}>
+              <Text style={styles.miniHanja}>{p.stem}</Text>
+              <Text style={styles.miniHanja}>{p.branch}</Text>
+              <Text style={styles.miniLabel}>{p.label}</Text>
+            </View>
+          ))}
+        </View>
+        {input.calendar === 'lunar' ? <Text style={styles.solar}>양력 {saju.solarDate}</Text> : null}
+      </LinearGradient>
+
+      <View style={styles.container}>
+        <FortuneTabs categories={categories} active={active.key} onChange={setActiveKey} />
+
+        <CategoryView category={active} />
+
+        {active.key === 'overview' && (
+          <>
+            <SectionCard title="사주명식">
+              <PillarTable pillars={saju.pillars} />
+            </SectionCard>
+            <SectionCard title="오행 분포">
+              <ElementBar count={saju.elementCount} />
+            </SectionCard>
+          </>
+        )}
+
+        <GoldButton label="결과 공유하기" onPress={share} />
+        <Link href="/input" asChild>
+          <Pressable style={styles.retry} accessibilityRole="button">
+            <Text style={styles.retryText}>다른 사람 사주 보기</Text>
+          </Pressable>
+        </Link>
+        <Text style={styles.notice}>사주풀이는 재미와 참고용이에요.</Text>
       </View>
-
-      <FortuneTabs categories={categories} active={active.key} onChange={setActiveKey} />
-
-      <CategoryView category={active} />
-
-      {active.key === 'overview' && (
-        <>
-          <SectionCard title="사주명식">
-            <PillarTable pillars={saju.pillars} />
-          </SectionCard>
-          <SectionCard title="오행 분석">
-            <ElementBar count={saju.elementCount} />
-          </SectionCard>
-        </>
-      )}
-
-      <Pressable style={styles.button} onPress={share} accessibilityRole="button">
-        <Text style={styles.buttonText}>결과 공유하기</Text>
-      </Pressable>
-      <Text style={styles.notice}>사주풀이는 재미와 참고용입니다.</Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xl },
-  header: { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.sm },
-  name: { fontSize: 22, fontWeight: '800', color: colors.text },
+  scroll: { paddingBottom: spacing.xl },
+  hero: {
+    alignItems: 'center',
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl + spacing.lg,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    overflow: 'hidden',
+  },
+  eyebrow: { color: colors.gold, fontSize: 12, letterSpacing: 1 },
+  name: { fontFamily: fonts.title, fontSize: 26, color: colors.textOnNight },
+  miniPillars: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  miniPillar: {
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md - 4,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  miniPillarMe: { borderColor: colors.gold, backgroundColor: 'rgba(232,194,122,0.14)' },
+  miniHanja: { fontFamily: fonts.title, fontSize: 22, lineHeight: 28, color: colors.textOnNight },
+  miniLabel: { fontSize: 10, color: colors.textOnNightMuted, marginTop: 2 },
+  solar: { fontSize: 12, color: colors.textOnNightMuted },
+  container: {
+    padding: spacing.md,
+    gap: spacing.md,
+    marginTop: -spacing.xl,
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
+  },
   meta: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg },
   link: { color: colors.primary, fontWeight: '700' },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 14,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  buttonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
+  retry: { alignItems: 'center', paddingVertical: spacing.sm },
+  retryText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
   notice: { textAlign: 'center', fontSize: 12, color: colors.textMuted },
 });
