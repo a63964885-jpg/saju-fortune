@@ -1,12 +1,15 @@
 import { Link, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
+import { CategoryView } from '../components/CategoryView';
 import { ElementBar } from '../components/ElementBar';
+import { FortuneTabs } from '../components/FortuneTabs';
 import { PillarTable } from '../components/PillarTable';
 import { SectionCard } from '../components/SectionCard';
 import { colors, spacing } from '../components/theme';
 import { calculateSaju, HOUR_BRANCHES, interpret } from '../lib/saju';
-import type { BirthInput } from '../types/saju';
+import type { BirthInput, FortuneCategory } from '../types/saju';
 
 type Params = Record<'name' | 'gender' | 'calendar' | 'leap' | 'year' | 'month' | 'day' | 'hour', string>;
 
@@ -30,7 +33,7 @@ function parseParams(p: Partial<Params>): BirthInput | null {
 function compute(input: BirthInput) {
   try {
     const saju = calculateSaju(input);
-    return { saju, sections: interpret(saju) };
+    return { saju, categories: interpret(saju) };
   } catch {
     // 존재하지 않는 날짜(예: 2월 30일)는 lunar-javascript가 예외를 던진다.
     return null;
@@ -40,8 +43,14 @@ function compute(input: BirthInput) {
 export default function Result() {
   const params = useLocalSearchParams<Params>();
   const input = parseParams(params);
+  const [activeKey, setActiveKey] = useState<FortuneCategory['key']>('overview');
+  // 웹 정적 빌드의 HTML에는 쿼리 파라미터가 없으므로, 마운트 후에 결과를 그려 하이드레이션 불일치를 막는다.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const computed = input ? compute(input) : null;
+
+  if (!mounted) return null;
 
   if (!input || !computed) {
     return (
@@ -54,7 +63,8 @@ export default function Result() {
     );
   }
 
-  const { saju, sections } = computed;
+  const { saju, categories } = computed;
+  const active = categories.find((c) => c.key === activeKey) ?? categories[0];
   const hourText = input.hourBranch === null ? '시간 모름' : HOUR_BRANCHES[input.hourBranch].name;
   const calendarText = input.calendar === 'solar' ? '양력' : input.leapMonth ? '음력(윤달)' : '음력';
 
@@ -62,7 +72,9 @@ export default function Result() {
     Share.share({
       message: `[사주풀이] ${input.name || '나'}의 사주: ${saju.pillars
         .map((p) => `${p.stem}${p.branch}`)
-        .join(' ')}\n\n${sections[0].body}`,
+        .join(' ')}\n\n${categories
+        .map((c) => `${c.tab} ${c.score}점 - ${c.headline}`)
+        .join('\n')}`,
     });
 
   return (
@@ -76,19 +88,20 @@ export default function Result() {
         </Text>
       </View>
 
-      <SectionCard title="사주명식">
-        <PillarTable pillars={saju.pillars} />
-      </SectionCard>
+      <FortuneTabs categories={categories} active={active.key} onChange={setActiveKey} />
 
-      <SectionCard title="오행 분석">
-        <ElementBar count={saju.elementCount} />
-      </SectionCard>
+      <CategoryView category={active} />
 
-      {sections.map((s) => (
-        <SectionCard key={s.title} title={s.title}>
-          {s.body}
-        </SectionCard>
-      ))}
+      {active.key === 'overview' && (
+        <>
+          <SectionCard title="사주명식">
+            <PillarTable pillars={saju.pillars} />
+          </SectionCard>
+          <SectionCard title="오행 분석">
+            <ElementBar count={saju.elementCount} />
+          </SectionCard>
+        </>
+      )}
 
       <Pressable style={styles.button} onPress={share} accessibilityRole="button">
         <Text style={styles.buttonText}>결과 공유하기</Text>

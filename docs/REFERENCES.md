@@ -44,7 +44,13 @@ python3 -m venv .venv && .venv/bin/pip install -r references/requirements.txt
 수집한 풀이 문장은 해당 사이트의 저작물이다. **앱에는 구성과 흐름만 참고했고, 풀이 문구(`src/data/interpretations/`)는 직접 새로 작성했다.**
 `references/data/`는 개인 학습용이며 `.gitignore`로 저장소에 올리지 않는다.
 
-## 2. 기술 문서
+## 2. 청월당 — 2027 월하소녀 신년운세
+- https://cheongwoldang.com/b/moongirl2027/result?page=4
+- 결과 페이지는 카카오 로그인 뒤에서만 볼 수 있다. 그래서 Firecrawl로는 로그인 화면만 수집되고 본문은 확인하지 못했다.
+- 반영한 점: 운세를 **분야별(재물운·애정운·직업운)로 나눠** 보여주는 구성
+- 차별점: 레퍼런스보다 설명을 줄였다. 탭마다 점수와 한 줄 요약을 먼저 보여주고, 소주제 3개는 각 2~3문장으로 제한했다.
+
+## 3. 기술 문서
 - Expo Router 설치: https://docs.expo.dev/router/installation/
 - Expo 웹 정적 빌드: https://docs.expo.dev/router/web/static-rendering/
 - lunar-javascript (만세력): https://github.com/6tail/lunar-javascript

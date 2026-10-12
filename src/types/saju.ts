@@ -37,7 +37,27 @@ export interface SajuResult {
   weakest: Element;
 }
 
-export interface ReadingSection {
+export type TenGodGroup = '비겁' | '식상' | '재성' | '관성' | '인성';
+
+/** 십신 개수 수준: 없음 / 적당 / 많음 */
+export type TenGodLevel = 'weak' | 'balanced' | 'strong';
+
+export interface SubSection {
   title: string;
   body: string;
+}
+
+export interface Lucky {
+  label: string;
+  value: string;
+}
+
+export interface FortuneCategory {
+  key: 'overview' | 'wealth' | 'love' | 'career';
+  tab: string;
+  score: number;
+  headline: string;
+  sections: SubSection[];
+  lucky: Lucky[];
+  tags?: string[];
 }
