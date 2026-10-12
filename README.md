@@ -47,4 +47,4 @@ saju-fortune/
 ```bash
 npm run deploy        # 웹 빌드 후 gh-pages 브랜치로 푸시
 ```
-배포 주소: https://<github-username>.github.io/saju-fortune/
+배포 주소: https://a63964885-jpg.github.io/saju-fortune/
